@@ -17,17 +17,35 @@ class WordCounterFixture extends FlatSpec with Matchers with ScalaFutures {
     override implicit val ec: ExecutionContext = system.dispatcher
   }
 
+  def source(seq: Seq[String]): Source[ByteString, _] =
+    Source.fromIterator(() => seq.map(ByteString.apply).toIterator)
+
   "WordCounter" should "count words" in {
     val sample = Seq("multiple words here", "more words here", "words and words")
-    val source = Source.fromIterator(() => sample.map(ByteString.apply).toIterator)
 
-    whenReady(sut.countWords(source)) {
+    whenReady(sut.countWords(source(sample))) {
       _ shouldBe Map(
         "multiple" -> 1,
         "words" -> 4,
         "here" -> 2,
         "more" -> 1,
         "and" -> 1
+      )
+    }
+  }
+
+  "WordCouter" should "not fail to re-assemble words that span two chunks of the stream" in {
+    val sample = Seq("a word can pote", "ntially span multiple chunks")
+
+    whenReady(sut.countWords(source(sample))) {
+      _ shouldBe Map(
+        "a" -> 1,
+        "word" -> 1,
+        "could" -> 1,
+        "potentially" -> 1,
+        "span" -> 1,
+        "multiple" -> 1,
+        "chunks" -> 1
       )
     }
   }
