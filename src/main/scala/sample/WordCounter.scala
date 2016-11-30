@@ -1,7 +1,8 @@
 package sample
 
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{Framing, Source}
 import akka.util.ByteString
+
 import scala.concurrent.Future
 
 trait WordCounter extends BasicAkkaIngredients {
@@ -25,7 +26,10 @@ trait WordCounter extends BasicAkkaIngredients {
     // I used runFold over fold here because I dislike exposing Source[T, _]
     //  when we specifically know the result is not a sequence, like in the case of an aggregate
     //  the only drawback being that this trait is now aware of the stream materializer
-    source.runFold(emptyWithDefaults) {
+    source.via {
+      // re-frame the incoming stream around whitespace boundaries because the source may cut a word in half
+      Framing.delimiter(ByteString(" "), maximumFrameLength = 1024, allowTruncation = true)
+    } .runFold(emptyWithDefaults) {
       case (segmentCounts, segment) => tokenize(segment).foldLeft(segmentCounts)(increment)
     }
   }
