@@ -34,7 +34,7 @@ class WordCounterFixture extends FlatSpec with Matchers with ScalaFutures {
     }
   }
 
-  "WordCouter" should "not fail to re-assemble words that span two chunks of the stream" in {
+  "WordCounter" should "not fail to re-assemble words that span two chunks of the stream" in {
     val sample = Seq("a word can pote", "ntially span multiple chunks")
 
     whenReady(sut.countWords(source(sample))) {
@@ -46,6 +46,18 @@ class WordCounterFixture extends FlatSpec with Matchers with ScalaFutures {
         "span" -> 1,
         "multiple" -> 1,
         "chunks" -> 1
+      )
+    }
+  }
+
+  "WordCounter" should "not interpret punctuation as part of words" in {
+    val sample = Seq("please, no; punctuation.")
+
+    whenReady(sut.countWords(source(sample))) {
+      _ shouldBe Map(
+        "please" -> 1,
+        "no" -> 1,
+        "punctuation" -> 1
       )
     }
   }

@@ -7,7 +7,7 @@ import scala.concurrent.Future
 
 trait WordCounter extends BasicAkkaIngredients {
 
-  private val splitter = """\s+""".r
+  private val splitter = """[\s\p{Punct}]+""".r
 
   private val emptyWithDefaults = Map[String, Int]().withDefaultValue(0)
 
